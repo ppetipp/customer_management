@@ -1,6 +1,7 @@
 package com.parpet.customer_management.exception;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,6 +88,15 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(body, status);
     }
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ApiError> handleEntityNotFoundException(EntityNotFoundException ex) {
+        logger.error("Entity not found: ", ex);
+        HttpStatus status = HttpStatus.NOT_FOUND;
+
+        ApiError body = new ApiError(ERROR_CODE.ENTITY_NOT_FOUND.name(), "Entity not found", ex.getMessage());
+        return new ResponseEntity<>(body, status);
+    }
+
 
     @ExceptionHandler(Throwable.class)
     public ResponseEntity<ApiError> defaultErrorHandler(Throwable t) {
@@ -103,7 +113,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiError> roomNotFoundExceptionHandler(HttpMessageNotReadableException ex) {
+    public ResponseEntity<ApiError> httpMessageNotReadableException(HttpMessageNotReadableException ex) {
         logger.error("Error: input data missing. ", ex);
         ApiError body = new ApiError(ERROR_CODE.ILLEGAL_ARGUMENT_ERROR.name(), "Error: input data missing.", "");
 

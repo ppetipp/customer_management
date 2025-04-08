@@ -1,8 +1,8 @@
 package com.parpet.customer_management.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.parpet.customer_management.audit.dto.CustomerAuditEventCommand;
 import com.parpet.customer_management.audit.CustomerAuditEventPublisher;
+import com.parpet.customer_management.audit.dto.CustomerAuditEventCommand;
 import com.parpet.customer_management.dto.incoming.CustomerCommand;
 import com.parpet.customer_management.dto.incoming.CustomerQueryDto;
 import com.parpet.customer_management.dto.incoming.SortDto;
@@ -91,13 +91,14 @@ public class CustomerService {
 
     // DELETE
     public void deleteCustomer(Long id) {
+        if (!customerRepository.existsById(id)) {
+            publishAudit("DELETE_CUSTOMER", id, null, "FAILED");
+            throw new EntityNotFoundException("Customer not found with id: " + id);
+        }
         try {
-            if (!customerRepository.existsById(id)) {
-                throw new EntityNotFoundException("Customer not found with id: " + id);
-            }
             customerRepository.deleteById(id);
             publishAudit("DELETE_CUSTOMER", id, null, "SUCCESS");
-        }catch (Exception e){
+        } catch (Exception e) {
             publishAudit("DELETE_CUSTOMER", id, null, "FAILED");
             throw e;
         }
