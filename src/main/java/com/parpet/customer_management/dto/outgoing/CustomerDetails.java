@@ -7,6 +7,8 @@ import java.time.LocalDate;
 
 @Data
 public class CustomerDetails {
+    private Long id;
+
     private String name;
 
     private Integer age;
