@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: customer_management
+  datasource:
+    url: jdbc:postgresql://localhost:5432/customer_db
+    username: postgres
+    password: test1234
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    # JSON típus támogatása PostgreSQL-ben
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties.hibernate.jdbc.lob.non_contextual_creation: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: auditevents, health
+  auditevents:
+    enabled: true 
