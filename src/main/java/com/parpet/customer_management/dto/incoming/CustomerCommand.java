@@ -8,18 +8,18 @@ import java.time.LocalDate;
 
 @Data
 public class CustomerCommand {
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "A név megadása kötelező")
+    @Size(max = 100, message = "A név hossza nem haladhatja meg a 100 karaktert")
     private String name;
 
-    @Positive
+    @Positive(message = "Az életkor pozitív szám kell legyen")
     private Integer age;
 
-    @NotNull
+    @NotNull(message = "A születési dátum megadása kötelező")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
 
-    @Size(max = 200)
+    @Size(max = 200, message = "Az cím hossza nem haladhatja meg a 200 karaktert")
     private String address;
 
     @Pattern(regexp = "^[MF]$")
