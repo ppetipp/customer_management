@@ -6,6 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +53,15 @@ public class PersistentAuditEventRepository implements AuditEventRepository {
                 .stream()
                 .map(this::convertToAuditEvent)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AuditEvent> find_ordered(Pageable pageable) {
+        List<AuditEvent> auditEvents = auditEventEntityRepository.findAll(pageable)
+                .stream()
+                .map(this::convertToAuditEvent)
+                .collect(Collectors.toList());
+        return new PageImpl<>(auditEvents, pageable, auditEventEntityRepository.count());
     }
 
     private AuditEvent convertToAuditEvent(AuditEventEntity entity) {

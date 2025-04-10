@@ -88,6 +88,7 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(body, status);
     }
+
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ApiError> handleEntityNotFoundException(EntityNotFoundException ex) {
         logger.error("Entity not found: ", ex);

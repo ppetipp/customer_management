@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.parpet.customer_management.audit.CustomerAuditEventPublisher;
 import com.parpet.customer_management.audit.dto.CustomerAuditEventCommand;
 import com.parpet.customer_management.dto.incoming.CustomerCommand;
-import com.parpet.customer_management.dto.incoming.CustomerQueryDto;
+import com.parpet.customer_management.dto.incoming.QueryDto;
 import com.parpet.customer_management.dto.incoming.SortDto;
 import com.parpet.customer_management.model.Customer;
 import com.parpet.customer_management.repository.CustomerRepository;
@@ -51,7 +51,7 @@ public class CustomerService {
     }
 
     // READ
-    public Page<Customer> getCustomers(CustomerQueryDto queryDto) {
+    public Page<Customer> getCustomers(QueryDto queryDto) {
         // parse and create sort orders
         List<SortDto> sortDtos = jsonStringToSortDto(queryDto.getSort());
         List<Sort.Order> orders = new ArrayList<>();

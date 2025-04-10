@@ -1,6 +1,7 @@
 package com.parpet.customer_management.audit.repository;
 
 import com.parpet.customer_management.audit.model.AuditEventEntity;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,4 +17,6 @@ public interface AuditEventEntityRepository extends JpaRepository<AuditEventEnti
             @Param("after") Instant after,
             @Param("type") String type
     );
+
+    List<AuditEventEntity> findAll(Sort sort);
 } 

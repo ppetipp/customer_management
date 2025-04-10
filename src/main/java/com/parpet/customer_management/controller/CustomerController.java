@@ -1,7 +1,7 @@
 package com.parpet.customer_management.controller;
 
 import com.parpet.customer_management.dto.incoming.CustomerCommand;
-import com.parpet.customer_management.dto.incoming.CustomerQueryDto;
+import com.parpet.customer_management.dto.incoming.QueryDto;
 import com.parpet.customer_management.dto.mapper.CustomerMapper;
 import com.parpet.customer_management.dto.outgoing.CustomerDetails;
 import com.parpet.customer_management.model.Customer;
@@ -37,7 +37,7 @@ public class CustomerController {
             @RequestParam(name = "size", defaultValue = "10") Integer size,
             @RequestParam(name = "sort", defaultValue = "[{\"field\":\"name\",\"direction\":\"ASC\"}]") String sort
     ) {
-        Page<Customer> customers = customerService.getCustomers(CustomerQueryDto.builder()
+        Page<Customer> customers = customerService.getCustomers(QueryDto.builder()
                 .page(page)
                 .size(size)
                 .sort(sort)

@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class CustomerQueryDto {
+public class QueryDto {
     private Integer page;
     private Integer size;
     private String sort;
