@@ -139,6 +139,15 @@ Alapértelmezett lekérdezés:
 curl http://localhost:8080/actuator/auditevents
 ```
 
+**Végpont:** `GET /actuator/auditevents/pageable?size=2&page=1`
+
+**Curl példák:**
+
+Alapértelmezett lekérdezés:
+```bash
+curl http://localhost:8080/actuator/auditevents/pageable?size=2&page=1
+```
+
 ### 6. Alkalmazás állapot ellenőrzése
 
 **Végpont:** `GET /actuator/health`
