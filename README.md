@@ -220,3 +220,74 @@ Audit bejegyzés példa:
 - JUnit 5
 - Lombok
 
+
+## Tesztkörnyezet
+
+#### Integrációs tesztek
+- Az alkalmazás végpontjainak teljes körű tesztelése
+- PostgreSQL adatbázist használ
+- Valós HTTP kéréseket szimulál MockMvc segítségével
+- Tranzakcionális tesztek, minden teszt után visszaáll az eredeti állapot
+
+### Tesztkörnyezet konfigurációja
+
+**test // application.yml:**
+```yaml
+spring:
+    datasource:
+    url: jdbc:postgresql://localhost:5432/customer_db_test
+    username: postgres
+    password: test1234
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    # JSON típus támogatása PostgreSQL-ben
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties.hibernate.jdbc.lob.non_contextual_creation: true
+```
+
+### Tesztesetek
+
+#### CustomerController Integrációs tesztek:
+
+1. Ügyfél létrehozása:
+   - Sikeres létrehozás valid adatokkal
+   - Validációs hibák kezelése (név, életkor, stb.)
+
+2. Ügyfél lekérdezése:
+   - Lapozás tesztelése (default és egyedi méret)
+   - Rendezés tesztelése
+
+3. Ügyfél módosítása:
+   - Sikeres módosítás
+   - Nem létező ID kezelése
+   - Validációs hibák kezelése
+
+4. Ügyfél törlése:
+   - Sikeres törlés
+   - Nem létező ID kezelése
+
+### Tesztelési best practices
+
+1. Tesztadatok kezelése:
+   - Minden teszt tiszta környezetből indul
+   - @BeforeEach használata a tesztadatok inicializálására
+
+2. Assertion best practices:
+   - Részletes hibaüzenetek használata
+   - Több assertion használata egy tesztben
+
+3. Tesztek izolációja:
+   - @Transactional annotáció használata
+   - Független tesztesetek
+   - Mockolt külső függőségek
+
+### Tesztek karbantartása
+
+1. Naming conventions:
+   - [TestedMethod]_[Scenario]_[ExpectedResult]
