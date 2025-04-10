@@ -121,7 +121,7 @@ public class CustomerService {
         customer.setGender(dto.getGender());
     }
 
-    private void publishAudit(String action, Long customerId, String request, String status) {
+    public void publishAudit(String action, Long customerId, String request, String status) {
         CustomerAuditEventCommand auditEvent = CustomerAuditEventCommand.builder()
                 .action(action)
                 .customerId(customerId)

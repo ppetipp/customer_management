@@ -1,6 +1,7 @@
 package com.parpet.customer_management.exception;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.parpet.customer_management.service.CustomerService;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +25,12 @@ public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private final MessageSource messageSource;
+    private final CustomerService customerService;
 
     @Autowired
-    public GlobalExceptionHandler(MessageSource messageSource) {
+    public GlobalExceptionHandler(MessageSource messageSource, CustomerService customerService) {
         this.messageSource = messageSource;
+        this.customerService = customerService;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -35,6 +38,8 @@ public class GlobalExceptionHandler {
         logger.error("A validation error occurred: ", ex);
         BindingResult result = ex.getBindingResult();
         List<FieldError> fieldErrors = result.getFieldErrors();
+
+        customerService.publishAudit("VALIDATION_ERROR", null, result.toString(), "FAILED");
 
         return new ResponseEntity<>(processFieldErrors(fieldErrors), HttpStatus.BAD_REQUEST);
     }
@@ -93,6 +98,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleEntityNotFoundException(EntityNotFoundException ex) {
         logger.error("Entity not found: ", ex);
         HttpStatus status = HttpStatus.NOT_FOUND;
+
+        customerService.publishAudit("ENTITYNOTFOUND_ERROR", null, ex.getMessage(), "FAILED");
 
         ApiError body = new ApiError(ERROR_CODE.ENTITY_NOT_FOUND.name(), "Entity not found", ex.getMessage());
         return new ResponseEntity<>(body, status);
