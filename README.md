@@ -130,22 +130,22 @@ curl -X DELETE http://localhost:8080/api/customers/1
 
 ### 5. Audit események lekérdezése
 
-**Végpont:** `GET /api/auditevents`
+**Végpont:** `GET /actuator/auditevents`
 
 **Curl példák:**
 
 Alapértelmezett lekérdezés:
 ```bash
-curl http://localhost:8080/api/auditevents
+curl http://localhost:8080/actuator/auditevents
 ```
 
 ### 6. Alkalmazás állapot ellenőrzése
 
-**Végpont:** `GET /health`
+**Végpont:** `GET /actuator/health`
 
 **Curl példa:**
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:8080/actuator/health
 ```
 
 ## Hibakezelés
