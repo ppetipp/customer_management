@@ -3,6 +3,7 @@ package com.parpet.customer_management.audit;
 import com.parpet.customer_management.dto.incoming.QueryDto;
 import com.parpet.customer_management.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CustomAuditService {
     private final PersistentAuditEventRepository persistentAuditEventRepository;
 
-    public CustomAuditService(PersistentAuditEventRepository persistentAuditEventRepository) {
+    public CustomAuditService(@Qualifier("persistentAuditEventRepository") PersistentAuditEventRepository persistentAuditEventRepository) {
         this.persistentAuditEventRepository = persistentAuditEventRepository;
     }
 
