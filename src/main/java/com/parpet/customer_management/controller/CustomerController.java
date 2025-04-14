@@ -48,13 +48,13 @@ public class CustomerController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Customer> updateCustomer(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody CustomerCommand customerCommand) {
         return ResponseEntity.ok(customerService.updateCustomer(id, customerCommand));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCustomer(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteCustomer(@PathVariable("id") Long id) {
         customerService.deleteCustomer(id);
         return ResponseEntity.noContent().build();
     }
