@@ -1,6 +1,5 @@
 package com.parpet.customer_management.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.parpet.customer_management.audit.CustomerAuditEventPublisher;
 import com.parpet.customer_management.audit.dto.CustomerAuditEventCommand;
 import com.parpet.customer_management.dto.incoming.CustomerCommand;
@@ -8,6 +7,7 @@ import com.parpet.customer_management.dto.incoming.QueryDto;
 import com.parpet.customer_management.dto.incoming.SortDto;
 import com.parpet.customer_management.model.Customer;
 import com.parpet.customer_management.repository.CustomerRepository;
+import com.parpet.customer_management.util.JsonUtils;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +53,7 @@ public class CustomerService {
     // READ
     public Page<Customer> getCustomers(QueryDto queryDto) {
         // parse and create sort orders
-        List<SortDto> sortDtos = jsonStringToSortDto(queryDto.getSort());
+        List<SortDto> sortDtos = JsonUtils.jsonStringToSortDto(queryDto.getSort());
         List<Sort.Order> orders = new ArrayList<>();
 
         if (sortDtos != null) {
@@ -101,15 +101,6 @@ public class CustomerService {
         } catch (Exception e) {
             publishAudit("DELETE_CUSTOMER", id, null, "FAILED");
             throw e;
-        }
-    }
-
-    private List<SortDto> jsonStringToSortDto(String jsonString) {
-        try {
-            ObjectMapper obj = new ObjectMapper();
-            return obj.readValue(jsonString, obj.getTypeFactory().constructCollectionType(List.class, SortDto.class));
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid JSON string", e);
         }
     }
 

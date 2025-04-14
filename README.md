@@ -243,21 +243,16 @@ Audit bejegyzés példa:
 **test // application.yml:**
 ```yaml
 spring:
-    datasource:
-    url: jdbc:postgresql://localhost:5432/customer_db_test
-    username: postgres
-    password: test1234
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: false
-    # JSON típus támogatása PostgreSQL-ben
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    properties.hibernate.jdbc.lob.non_contextual_creation: true
+   application:
+      name: customer_management
+   datasource:
+      driver-class-name: org.h2.Driver
+      password:
+      url: jdbc:h2:mem:testdb;NON_KEYWORDS=USER;MODE=PostgreSQL
+      username: sa
+   jpa:
+      open-in-view: false
+      database-platform: org.hibernate.dialect.PostgreSQLDialect
 ```
 
 ### Tesztesetek
