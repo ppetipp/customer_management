@@ -1,78 +1,102 @@
 package com.parpet.customer_management.exception;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.parpet.customer_management.audit.CustomerAuditEventPublisher;
+import com.parpet.customer_management.audit.dto.CustomerAuditEventCommand;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.*;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
-@ControllerAdvice
+@Slf4j
+@RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private final MessageSource messageSource;
-
-    @Autowired
-    public GlobalExceptionHandler(MessageSource messageSource) {
-        this.messageSource = messageSource;
-    }
+    private final CustomerAuditEventPublisher auditEventPublisher;
+    private final ObjectMapper objectMapper;
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    protected ResponseEntity<ValidationError> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
-        logger.error("A validation error occurred: ", ex);
-        List<FieldError> fieldErrors = null;
+    public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         try {
-            BindingResult result = ex.getBindingResult();
-            fieldErrors = result.getFieldErrors();
+            // Kérés adatainak kinyerése
+            Object requestBody = ex.getBindingResult().getTarget();
+            String requestJson = objectMapper.writeValueAsString(requestBody);
 
+            // Művelet típusának meghatározása
+            String methodName = Objects.requireNonNull(ex.getParameter().getMethod()).getDeclaringClass().getName();
+            String operation = determineOperation(methodName);
+
+            // Audit esemény létrehozása
+            auditEventPublisher.publishAuditEvent(CustomerAuditEventCommand.builder()
+                    .action(operation)
+                    .customerId(null)
+                    .request(requestJson)
+                    .status("VALIDATION_ERROR")
+                    .timestamp(Instant.now())
+                    .build());
+
+            // Hibaüzenet összeállítása
+            Map<String, Object> errors = new HashMap<>();
+            ex.getBindingResult().getFieldErrors().forEach(error ->
+                    errors.put(error.getField(), error.getDefaultMessage()));
+
+            return ResponseEntity.badRequest().body(errors);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("Error handling validation exception", e);
+            return ResponseEntity.badRequest().body(Map.of("error", "Validation error occurred"));
         }
-
-        return new ResponseEntity<>(processFieldErrors(fieldErrors), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    protected ResponseEntity<ValidationError> handleConstraintViolationException(ConstraintViolationException ex) {
-        logger.error("A validation error occurred: ", ex);
-        List<FieldError> fieldErrors = new ArrayList<>();
+    public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex) {
         try {
-            Set<ConstraintViolation<?>> constraintViolations = ex.getConstraintViolations();
+            // Audit esemény létrehozása
+            auditEventPublisher.publishAuditEvent(CustomerAuditEventCommand.builder()
+                    .action("CUSTOMER_OPERATION")
+                    .customerId(null)
+                    .request(ex.getMessage())
+                    .status("VALIDATION_ERROR")
+                    .timestamp(Instant.now())
+                    .build());
 
-            constraintViolations.forEach(constraintViolation -> {
-                String fieldName = constraintViolation.getPropertyPath().toString();
-                String message = constraintViolation.getMessage();
-                fieldErrors.add(new FieldError("objectName", fieldName, message));
-            });
+            // Hibaüzenet összeállítása
+            Map<String, Object> errors = new HashMap<>();
+            ex.getConstraintViolations().forEach(violation ->
+                    errors.put(violation.getPropertyPath().toString(), violation.getMessage()));
 
+            return ResponseEntity.badRequest().body(errors);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("Error handling constraint violation", e);
+            return ResponseEntity.badRequest().body(Map.of("error", "Validation error occurred"));
         }
-
-        return new ResponseEntity<>(processFieldErrors(fieldErrors), HttpStatus.BAD_REQUEST);
     }
 
-    private ValidationError processFieldErrors(List<FieldError> fieldErrors) {
-        ValidationError validationError = new ValidationError();
-
-        for (FieldError fieldError : fieldErrors) {
-            validationError.addFieldError(fieldError.getField(), messageSource.getMessage(fieldError, Locale.getDefault()));
-        }
-
-        return validationError;
+    private String determineOperation(String methodName) {
+        return switch (methodName) {
+            case "createCustomer" -> "CREATE_CUSTOMER";
+            case "updateCustomer" -> "UPDATE_CUSTOMER";
+            case "deleteCustomer" -> "DELETE_CUSTOMER";
+            default -> "UNKNOWN_OPERATION";
+        };
     }
 
     @ExceptionHandler(JsonParseException.class)
@@ -124,10 +148,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, status);
     }
 
-
     @ExceptionHandler(Throwable.class)
     public ResponseEntity<ApiError> defaultErrorHandler(Throwable t) {
-
         logger.error("An unexpected error occurred: ", t);
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 

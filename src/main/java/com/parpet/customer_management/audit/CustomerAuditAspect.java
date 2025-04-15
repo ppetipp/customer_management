@@ -3,7 +3,6 @@ package com.parpet.customer_management.audit;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.parpet.customer_management.audit.dto.CustomerAuditEventCommand;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -32,17 +31,13 @@ public class CustomerAuditAspect {
             Object result = joinPoint.proceed();
             publishSuccessAudit(methodName, args);
             return result;
-        } catch (MethodArgumentNotValidException ex) {
-            publishValidationError(methodName, args);
-            throw ex;
-        } catch (ConstraintViolationException ex) {
-            publishConstraintError(methodName, args);
-            throw ex;
         } catch (EntityNotFoundException ex) {
             publishNotFoundError(methodName, extractCustomerId(args));
             throw ex;
         } catch (Exception ex) {
-            publishGeneralError(methodName, args);
+            if (!(ex instanceof MethodArgumentNotValidException)) {
+                publishGeneralError(methodName, args);
+            }
             throw ex;
         }
     }
@@ -79,40 +74,6 @@ public class CustomerAuditAspect {
             case "deleteCustomer" -> "DELETE_CUSTOMER";
             default -> "UNKNOWN_OPERATION";
         };
-    }
-
-    private void publishValidationError(String methodName, Object[] args) {
-        try {
-            String operation = determineOperation(methodName);
-            String request = args.length > 0 ? objectMapper.writeValueAsString(args[0]) : null;
-
-            auditEventPublisher.publishAuditEvent(CustomerAuditEventCommand.builder()
-                    .action(operation)
-                    .customerId(null)
-                    .request(request)
-                    .status("VALIDATION_ERROR")
-                    .timestamp(Instant.now())
-                    .build());
-        } catch (Exception ex) {
-            log.error("Error publishing validation error: ", ex);
-        }
-    }
-
-    private void publishConstraintError(String methodName, Object[] args) {
-        try {
-            String operation = determineOperation(methodName);
-            String request = args.length > 0 ? objectMapper.writeValueAsString(args[0]) : null;
-
-            auditEventPublisher.publishAuditEvent(CustomerAuditEventCommand.builder()
-                    .action(operation)
-                    .customerId(null)
-                    .request(request)
-                    .status("CONSTRAINT_ERROR")
-                    .timestamp(Instant.now())
-                    .build());
-        } catch (Exception ex) {
-            log.error("Error publishing constraint error: ", ex);
-        }
     }
 
     private void publishNotFoundError(String methodName, Long aLong) {
