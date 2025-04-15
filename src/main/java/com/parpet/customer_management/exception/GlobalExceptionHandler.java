@@ -1,8 +1,9 @@
 package com.parpet.customer_management.exception;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.parpet.customer_management.service.CustomerService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,30 +17,50 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private final MessageSource messageSource;
-    private final CustomerService customerService;
 
     @Autowired
-    public GlobalExceptionHandler(MessageSource messageSource, CustomerService customerService) {
+    public GlobalExceptionHandler(MessageSource messageSource) {
         this.messageSource = messageSource;
-        this.customerService = customerService;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ResponseEntity<ValidationError> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         logger.error("A validation error occurred: ", ex);
-        BindingResult result = ex.getBindingResult();
-        List<FieldError> fieldErrors = result.getFieldErrors();
+        List<FieldError> fieldErrors = null;
+        try {
+            BindingResult result = ex.getBindingResult();
+            fieldErrors = result.getFieldErrors();
 
-        customerService.publishAudit("VALIDATION_ERROR", null, result.toString(), "FAILED");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return new ResponseEntity<>(processFieldErrors(fieldErrors), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    protected ResponseEntity<ValidationError> handleConstraintViolationException(ConstraintViolationException ex) {
+        logger.error("A validation error occurred: ", ex);
+        List<FieldError> fieldErrors = new ArrayList<>();
+        try {
+            Set<ConstraintViolation<?>> constraintViolations = ex.getConstraintViolations();
+
+            constraintViolations.forEach(constraintViolation -> {
+                String fieldName = constraintViolation.getPropertyPath().toString();
+                String message = constraintViolation.getMessage();
+                fieldErrors.add(new FieldError("objectName", fieldName, message));
+            });
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         return new ResponseEntity<>(processFieldErrors(fieldErrors), HttpStatus.BAD_REQUEST);
     }
@@ -98,8 +119,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleEntityNotFoundException(EntityNotFoundException ex) {
         logger.error("Entity not found: ", ex);
         HttpStatus status = HttpStatus.NOT_FOUND;
-
-        customerService.publishAudit("ENTITYNOTFOUND_ERROR", null, ex.getMessage(), "FAILED");
 
         ApiError body = new ApiError(ERROR_CODE.ENTITY_NOT_FOUND.name(), "Entity not found", ex.getMessage());
         return new ResponseEntity<>(body, status);

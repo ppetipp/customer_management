@@ -7,7 +7,7 @@ import com.parpet.customer_management.dto.outgoing.CustomerDetails;
 import com.parpet.customer_management.model.Customer;
 import com.parpet.customer_management.service.CustomerService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,20 +15,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/customers")
+@RequiredArgsConstructor
 public class CustomerController {
     private final CustomerService customerService;
     private final CustomerMapper customerMapper;
 
-    @Autowired
-    public CustomerController(CustomerService customerService, CustomerMapper customerMapper) {
-        this.customerService = customerService;
-        this.customerMapper = customerMapper;
-    }
-
     @PostMapping
     public ResponseEntity<Customer> createCustomer(@Valid @RequestBody CustomerCommand customerCommand) {
-        Customer result = customerService.createCustomer(customerCommand);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(customerService.createCustomer(customerCommand));
     }
 
     @GetMapping
